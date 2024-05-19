@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Vogelart Bestimmung</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Trebuchet MS', sans-serif;
+            padding: 20px;
+            background: #e0f7fa;
+            color: #333;
+            text-align: center;
+        }
+        h1 {
+            color: #00695c;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        p {
+            color: #558b2f;
+            font-size: 16px;
+        }
+        input[type="file"] {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #26a69a;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            box-shadow: 0px 2px 2px lightgray;
+        }
+        button:hover {
+            background-color: #00796b;
+        }
+        #result {
+            margin-top: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .resultItem {
+            font-size: 20px;
+            margin: 10px 0;
+        }
+        .resultItem span {
+            font-weight: bold;
+            color: #26a69a;
+        }
+        img.preview {
+            max-width: 100%;
+            margin-top: 20px;
+        }
+        i.fa-bird {
+            color: #26a69a;
+            font-size: 50px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1><i class="fa fa-bird"></i> Vogelart Bestimmung</h1>
+    <p>Finden wir heraus welcher Vogel es ist :)</p>
+    <input type="file" id="fileInput" accept="image/*">
+    <button type="button" id="analyzeButton">Bestimmen</button>
+    <img id="imagePreview" class="preview" src="" alt="Bildvorschau" style="display: none;">
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imgElement = document.createElement('img');
+                imgElement.src = e.target.result;
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('imagePreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('analyzeButton').addEventListener('click', function() {
+            var fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length === 0) {
+                alert('Bitte wählen Sie ein Bild aus.');
+                return;
+            }
+            var file = fileInput.files[0];
+            var formData = new FormData();
+            formData.append('image', file);
+
+            fetch('/analyze', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                let resultsHTML = '<h3>Ergebnis:</h3>';
+                data.forEach(item => {
+                    resultsHTML += `<div class="resultItem"><span>${item.className}</span>: ${(item.probability * 100).toFixed(2)}%</div>`;
+                });
+                document.getElementById('result').innerHTML = resultsHTML;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = '<p style="color: red;">Fehler bei der Vogelanalyse.</p>';
+            });
+        });
+    </script>
+</body>
+</html>
